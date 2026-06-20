@@ -95,13 +95,16 @@ jobs:
 
       - name: Gradle build (release APKs)
         # Sign with our own committed release.keystore (personal build).
-        env:
-          KEYSTORE_PASS: nagrampass
-          ALIAS_NAME: nagram
-          ALIAS_PASS: nagrampass
+        # Credentials go into local.properties (a file read fresh at every
+        # Gradle configuration) rather than env vars: a Gradle daemon started
+        # by an earlier native step captures its own environment, so
+        # System.getenv(...) inside that reused daemon would NOT see step `env`.
         run: |
           sed -i "s/2000000000000/$(date +%s%3N)/g" gradle.properties
           echo "sdk.dir=${ANDROID_HOME}" >> local.properties
+          echo "KEYSTORE_PASS=nagrampass" >> local.properties
+          echo "ALIAS_NAME=nagram" >> local.properties
+          echo "ALIAS_PASS=nagrampass" >> local.properties
           ./gradlew TMessagesProj:assembleRelease --build-cache --no-configuration-cache
 
       - name: Collect APKs

@@ -1,0 +1,54 @@
+name: Verify signing (fast)
+
+# Fast pre-flight check (~minutes, no native build): proves the release
+# signing chain works end to end. `signingReport` actually opens
+# release.keystore with the configured password and alias and prints the
+# certificate, so a green run guarantees the long auto-update build will NOT
+# fail at the packaging/signing step. Run this before the 4-hour build.
+#
+# Not present upstream -> never causes merge conflicts.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  NDK_VERSION: '27.2.12479018'
+
+jobs:
+  verify:
+    name: signingReport
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: |
+          echo "y" | sdkmanager --install "ndk;${NDK_VERSION}" --sdk_root=${ANDROID_SDK_ROOT} &> /dev/null
+
+      - name: Write local.properties (sdk/ndk + signing creds)
+        # Same source of truth the real build uses: credentials live in the
+        # file so they survive Gradle daemon reuse (env vars do not).
+        run: |
+          echo "sdk.dir=${ANDROID_HOME}" > local.properties
+          echo "ndk.dir=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> local.properties
+          echo "KEYSTORE_PASS=nagrampass" >> local.properties
+          echo "ALIAS_NAME=nagram" >> local.properties
+          echo "ALIAS_PASS=nagrampass" >> local.properties
+
+      - name: signingReport (validates keystore + password + alias)
+        run: ./gradlew :TMessagesProj:signingReport
