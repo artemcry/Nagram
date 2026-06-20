@@ -582,6 +582,7 @@ public class SearchAdapterHelper {
     }
 
     public ArrayList<TLObject> getGlobalSearch() {
+        if (true) return new ArrayList<>(); // [local patch] force-disable global search
         if (NaConfig.INSTANCE.getDisableGlobalSearch().Bool()) {
             return new ArrayList<TLObject>();
         }

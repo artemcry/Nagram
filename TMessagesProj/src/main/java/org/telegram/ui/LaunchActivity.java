@@ -6074,6 +6074,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     }
 
     public void checkAppUpdate(boolean force, Browser.Progress progress, boolean updateAlways) {
+        if (!force) return; // [local patch] disable automatic update checks
 //        if (!ApplicationLoader.isStandaloneBuild() && !ApplicationLoader.isBetaBuild()) {
 //            return;
 //        }
