@@ -94,6 +94,11 @@ jobs:
           export NATIVE_TARGET="armeabi-v7a"; ./run libs native
 
       - name: Gradle build (release APKs)
+        # Sign with our own committed release.keystore (personal build).
+        env:
+          KEYSTORE_PASS: nagrampass
+          ALIAS_NAME: nagram
+          ALIAS_PASS: nagrampass
         run: |
           sed -i "s/2000000000000/$(date +%s%3N)/g" gradle.properties
           echo "sdk.dir=${ANDROID_HOME}" >> local.properties
