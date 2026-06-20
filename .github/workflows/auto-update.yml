@@ -1,0 +1,114 @@
+name: Auto update & build
+
+# Periodically merges the latest upstream Nagram into our `dev` branch
+# (our local patches are add-only, so the merge stays conflict-free),
+# rebuilds the APKs and publishes them to a rolling "auto-latest" release.
+#
+# This file is NOT present upstream, so it never causes merge conflicts.
+
+on:
+  schedule:
+    - cron: '0 4 */2 * *'   # every 2 days at 04:00 UTC
+  workflow_dispatch: {}      # allow manual run from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-update
+  cancel-in-progress: true
+
+env:
+  NDK_VERSION: '27.2.12479018'
+  UPSTREAM: 'https://github.com/NextAlone/Nagram'
+
+jobs:
+  build:
+    name: Sync upstream and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Merge latest upstream
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream "${UPSTREAM}"
+          git fetch upstream
+          # Our patches are add-only; this merge should never conflict.
+          git merge --no-edit upstream/main
+          git push origin dev
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: |
+          echo "y" | sdkmanager --install "ndk;${NDK_VERSION}" --sdk_root=${ANDROID_SDK_ROOT} &> /dev/null
+          echo "sdk.dir=${ANDROID_HOME}" > local.properties
+          echo "ndk.dir=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> local.properties
+
+      - name: Init native submodules
+        run: |
+          sed -i 's/\/\///g' settings.gradle
+          git submodule update --init 'TMessagesProj/jni/*'
+
+      - name: Cache native libraries
+        uses: actions/cache@v4
+        with:
+          path: |
+            TMessagesProj/jni/ffmpeg/build
+            TMessagesProj/jni/libvpx/build
+            TMessagesProj/jni/boringssl/build
+          key: native-${{ hashFiles('TMessagesProj/jni/*ffmpeg*.sh', 'TMessagesProj/jni/*libvpx*.sh', 'TMessagesProj/jni/*boringssl*.sh', 'TMessagesProj/jni/patches/**') }}
+
+      - name: Build native dependencies
+        run: |
+          ./run init action ffmpeg
+          ./run init libs libvpx
+          ./run init libs ffmpeg
+          ./run init action boringssl
+          ./run init libs boringssl
+
+      - name: Build native (per ABI)
+        run: |
+          ( cd TMessagesProj/jni && ./patch_boringssl.sh )
+          export NATIVE_TARGET="arm64-v8a";  ./run libs native
+          export NATIVE_TARGET="armeabi-v7a"; ./run libs native
+
+      - name: Gradle build (release APKs)
+        run: |
+          sed -i "s/2000000000000/$(date +%s%3N)/g" gradle.properties
+          echo "sdk.dir=${ANDROID_HOME}" >> local.properties
+          ./gradlew TMessagesProj:assembleRelease --build-cache --no-configuration-cache
+
+      - name: Collect APKs
+        run: |
+          mkdir -p out
+          find TMessagesProj/build/outputs/apk -name '*.apk' -exec cp {} out/ \;
+          ls -la out
+
+      - name: Publish rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete auto-latest --yes --cleanup-tag || true
+          gh release create auto-latest out/*.apk \
+            --target dev \
+            --title "Latest auto build" \
+            --notes "Auto-built from upstream + local patches on $(date -u '+%Y-%m-%d %H:%M UTC')"
