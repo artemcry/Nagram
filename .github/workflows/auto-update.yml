@@ -39,8 +39,16 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream "${UPSTREAM}"
           git fetch upstream
-          # Our patches are add-only; this merge should never conflict.
-          git merge --no-edit upstream/main
+          # Our patches are add-only; this merge should normally never conflict.
+          # If it does, fail loudly with the file list and leave dev clean
+          # (merge --abort) so a half-merged tree never gets built/published.
+          if ! git merge --no-edit upstream/main; then
+            echo "::error title=Upstream merge conflict::Local patches conflict with upstream/main - resolve manually."
+            echo "Conflicting files:"
+            git diff --name-only --diff-filter=U
+            git merge --abort
+            exit 1
+          fi
           git push origin dev
 
       - name: Set up JDK 17
