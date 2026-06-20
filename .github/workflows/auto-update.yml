@@ -114,8 +114,11 @@ jobs:
           ls -la out
 
       - name: Publish rolling release
+        # In a fork, gh defaults to the parent repo (NextAlone/Nagram) where we
+        # have no write access -> HTTP 403. Pin every call to our own fork.
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release delete auto-latest --yes --cleanup-tag || true
           gh release create auto-latest out/*.apk \
