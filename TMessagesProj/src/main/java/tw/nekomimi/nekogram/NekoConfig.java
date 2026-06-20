@@ -86,8 +86,8 @@ public class NekoConfig {
     public static ConfigItem actionBarDecoration = addConfig("ActionBarDecoration", configTypeInt, 0);
     public static ConfigItem newYear = addConfig("ChristmasHat", configTypeBool, false);
     public static ConfigItem stickerSize = addConfig("stickerSize", configTypeFloat, 14.0f);
-    public static ConfigItem unlimitedFavedStickers = addConfig("UnlimitedFavoredStickers", configTypeBool, false);
-    public static ConfigItem unlimitedPinnedDialogs = addConfig("UnlimitedPinnedDialogs", configTypeBool, false);
+    public static ConfigItem unlimitedFavedStickers = addConfig("UnlimitedFavoredStickers", configTypeBool, true); // [local patch] premium on by default
+    public static ConfigItem unlimitedPinnedDialogs = addConfig("UnlimitedPinnedDialogs", configTypeBool, true); // [local patch] premium on by default
     public static ConfigItem disablePhotoSideAction = addConfig("DisablePhotoViewerSideAction", configTypeBool, false);
     public static ConfigItem openArchiveOnPull = addConfig("OpenArchiveOnPull", configTypeBool, false);
     public static ConfigItem disablePullDownSearch = addConfig("DisablePullDownSearch", configTypeBool, false);
@@ -177,7 +177,7 @@ public class NekoConfig {
     public static ConfigItem disableChoosingSticker = addConfig("disableChoosingSticker", configTypeBool, false);
     public static ConfigItem hideGroupSticker = addConfig("hideGroupSticker", configTypeBool, false);
     public static ConfigItem disablePremiumStickerAnimation = addConfig("disablePremiumStickerAnimation", configTypeBool, false);
-    public static ConfigItem hideSponsoredMessage = addConfig("hideSponsoredMessage", configTypeBool, false);
+    public static ConfigItem hideSponsoredMessage = addConfig("hideSponsoredMessage", configTypeBool, true); // [local patch] hide channel ads by default
     public static ConfigItem rememberAllBackMessages = addConfig("rememberAllBackMessages", configTypeBool, false);
     public static ConfigItem hideSendAsChannel = addConfig("hideSendAsChannel", configTypeBool, false);
     public static ConfigItem showSpoilersDirectly = addConfig("showSpoilersDirectly", configTypeBool, false);
@@ -191,16 +191,16 @@ public class NekoConfig {
     public static ConfigItem disableAutoDownloadingWin32Executable = addConfig("Win32ExecutableFiles", configTypeBool, true);
     public static ConfigItem disableAutoDownloadingArchive = addConfig("ArchiveFiles", configTypeBool, true);
 
-    public static ConfigItem enableStickerPin = addConfig("EnableStickerPin", configTypeBool, false);
+    public static ConfigItem enableStickerPin = addConfig("EnableStickerPin", configTypeBool, true); // [local patch] premium on by default
     public static ConfigItem useMediaStreamInVoip = addConfig("UseMediaStreamInVoip", configTypeBool, false);
     public static ConfigItem customAudioBitrate = addConfig("customAudioBitrate", configTypeInt, 32);
     public static ConfigItem disableGroupVoipAudioProcessing = addConfig("disableGroupVoipAudioProcessing", configTypeBool, false);
-    public static ConfigItem enhancedFileLoader = addConfig("enhancedFileLoader", configTypeBool, false);
+    public static ConfigItem enhancedFileLoader = addConfig("enhancedFileLoader", configTypeBool, true); // [local patch] faster downloads by default
     public static ConfigItem useOSMDroidMap = addConfig("useOSMDroidMap", configTypeBool, false);
     public static ConfigItem mapDriftingFixForGoogleMaps = addConfig("mapDriftingFixForGoogleMaps", configTypeBool, true);
 
     // priv branch changes
-    public static ConfigItem localPremium = addConfig("localPremium", configTypeBool, false);
+    public static ConfigItem localPremium = addConfig("localPremium", configTypeBool, true); // [local patch] premium on by default
 
     public static ConfigItem localeToDBC = addConfig("LocaleToDBC", configTypeBool, false);
 

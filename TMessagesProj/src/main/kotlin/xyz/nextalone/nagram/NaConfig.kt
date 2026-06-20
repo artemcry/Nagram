@@ -692,7 +692,7 @@ object NaConfig {
         addConfig(
             "ShowHiddenFeature",
             ConfigItem.configTypeBool,
-            false
+            true // [local patch] keep hidden/premium features visible so localPremium is not force-reset
         )
     val searchHashtagDefaultPageChannel =
         addConfig(
