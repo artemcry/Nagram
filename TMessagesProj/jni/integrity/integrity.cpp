@@ -7,6 +7,7 @@ static const char *SIGN = "3A0F57FE06485D0B90D0ACD990E3A30328E3988D";
 
 extern "C" {
 int verifySign(JNIEnv *env) {
+    return JNI_OK; // [local patch] personal fork is re-signed with our own key; skip APK signature pinning
     jobject application = getApplication(env);
     if (application == nullptr) {
         return JNI_ERR;
