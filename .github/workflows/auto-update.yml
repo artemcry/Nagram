@@ -86,8 +86,10 @@ jobs:
           ./run init libs boringssl
 
       - name: Build native (per ABI)
+        # boringssl is already patched by `./run init libs boringssl` above,
+        # so we must NOT run patch_boringssl.sh again here (it would fail as
+        # "already applied"). Just build the per-ABI native libraries.
         run: |
-          ( cd TMessagesProj/jni && ./patch_boringssl.sh )
           export NATIVE_TARGET="arm64-v8a";  ./run libs native
           export NATIVE_TARGET="armeabi-v7a"; ./run libs native
 
