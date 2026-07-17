@@ -451,6 +451,13 @@ object NaConfig {
             0,
             false
         )
+    val defaultDeleteMenuDeleteAllReactions =
+        addConfig(
+            "DeleteAllReactionsFromUsers",
+            defaultDeleteMenu,
+            4,
+            false
+        )
     val disableSuggestionView =
         addConfig(
             "DisableSuggestionView",
@@ -1268,6 +1275,12 @@ object NaConfig {
             "HiddenMessageMenuOptions",
             ConfigItem.configTypeString,
             ""
+        )
+    val showRecentForwardTab =
+        addConfig(
+            "ShowRecentForwardTab",
+            ConfigItem.configTypeBool,
+            false
         )
 
     private fun addConfig(

@@ -32,8 +32,6 @@ import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceBitmap;
 import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceColor;
 import org.telegram.ui.Components.blur3.source.BlurredBackgroundSourceRenderNode;
 
-import xyz.nextalone.nagram.NaConfig;
-
 public class BlurredBackgroundWithFadeDrawable extends Drawable {
     private final Paint maskFadeGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final BlurredBackgroundDrawable drawable;
@@ -53,7 +51,14 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
     private int fadeHeight;
     private boolean opacity;
 
+    private boolean transparent;
+
     public BlurredBackgroundWithFadeDrawable(BlurredBackgroundDrawable drawable) {
+        this(drawable, false);
+    }
+
+    public BlurredBackgroundWithFadeDrawable(BlurredBackgroundDrawable drawable, boolean transparent) {
+        this.transparent = transparent;
         this.drawable = drawable;
         maskFadeGradientPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
         bitmapPaint.setFilterBitmap(true);
@@ -86,16 +91,21 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
 
     private final Paint colorStaticPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int colorStaticLast;
+    private boolean ignoreFastWay;
+
+    public void setIgnoreFastWay(boolean ignoreFastWay) {
+        this.ignoreFastWay = ignoreFastWay;
+    }
 
     @Override
     public void draw(@NonNull Canvas canvas) {
         final Rect bounds = getBounds();
-        if (bounds.isEmpty()) {
+        if (bounds.isEmpty() || alpha == 0) {
             return;
         }
 
         BlurredBackgroundSource source = drawable.getUnwrappedSource();
-        if (source instanceof BlurredBackgroundSourceColor) {
+        if (!ignoreFastWay && source instanceof BlurredBackgroundSourceColor) {
             // fast way - just draw gradient
 
             final int color = ((BlurredBackgroundSourceColor) source).getColor();
@@ -114,11 +124,12 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
             matrixTmp.postTranslate(bounds.left, bounds.top + offset);
             gradientShader.setLocalMatrix(matrixTmp);
 
+            colorStaticPaint.setAlpha(alpha);
             canvas.drawRect(bounds, colorStaticPaint);
             return;
         }
 
-        if (source instanceof BlurredBackgroundSourceBitmap && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (!ignoreFastWay && source instanceof BlurredBackgroundSourceBitmap && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             // fast way - just draw gradient
 
             final BlurredBackgroundSourceBitmap s = (BlurredBackgroundSourceBitmap) source;
@@ -162,6 +173,7 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
             bitmapMatrix.postTranslate(-drawable.getSourceOffsetX(), -drawable.getSourceOffsetY());
             bitmapShader.setLocalMatrix(bitmapMatrix);
 
+            bitmapPaint.setAlpha(alpha);
             canvas.drawRect(bounds, bitmapPaint);
             return;
         }
@@ -169,7 +181,7 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
         //if (source instanceof BlurredBackgroundSourceRenderNode) {
         //    return;
         //}
-        final int save = canvas.saveLayer(bounds.left, bounds.top, bounds.right, bounds.bottom, null);
+        final int save = canvas.saveLayerAlpha(bounds.left, bounds.top, bounds.right, bounds.bottom, alpha);
         int offset = 0;
         if (fadeHeight < 0) {
             offset = bounds.height() + fadeHeight;
@@ -181,9 +193,16 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
         canvas.restoreToCount(save);
     }
 
+    private int alpha = 255;
+
     @Override
     public void setAlpha(int alpha) {
-        //
+        this.alpha = alpha;
+    }
+
+    @Override
+    public int getAlpha() {
+        return alpha;
     }
 
     @Override
@@ -196,18 +215,15 @@ public class BlurredBackgroundWithFadeDrawable extends Drawable {
         return PixelFormat.UNKNOWN;
     }
 
-    private static LinearGradient createGradient(int color, boolean opacity) {
-        int alpha = Color.alpha(color);
-        if (NaConfig.INSTANCE.getChatActivityNavbarTransparent().Bool()) {
-            alpha = 0;
-        }
+    private LinearGradient createGradient(int color, boolean opacity) {
+        int alpha = transparent ? 0 : Color.alpha(color);
 
         if (opacity) {
             return new LinearGradient(0, 0, 0, 1, new int[]{
                 ColorUtils.setAlphaComponent(color, 0),
-                ColorUtils.setAlphaComponent(color, 0x60 * alpha / 280),
-                ColorUtils.setAlphaComponent(color, 0xB0 * alpha / 280),
-                ColorUtils.setAlphaComponent(color, 0xE8 * alpha / 280),
+                ColorUtils.setAlphaComponent(color, 0x60 * alpha / 285),
+                ColorUtils.setAlphaComponent(color, 0xB0 * alpha / 285),
+                ColorUtils.setAlphaComponent(color, 0xE8 * alpha / 285),
             }, null, Shader.TileMode.CLAMP);
         }
 
